@@ -17,6 +17,8 @@
   },
   "homepage": "https://github.com/ShemikaKW/Bamazon#readme",
   "dependencies": {
-    "inquirer": "^6.2.0"
+    "cli-table": "^0.3.1",
+    "inquirer": "^6.2.0",
+    "mysql": "^2.16.0"
   }
 }

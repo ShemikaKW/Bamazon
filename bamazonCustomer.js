@@ -10,7 +10,7 @@ var connection = mysql.createConnection({
     user: "root",
 
     // Your Password
-    password: "",
+    password: "Charityandgary2",
     database: "bamazon_db"
 });
 
@@ -26,7 +26,7 @@ connection.connect(function(err){
 function start() {
     inquirer.prompt([{
         type: "confirm",
-        name: "welcome",
+        name: "confirm",
         message: "Welcome to Bamazon! Would  you like to view our inventory?",
         default: true
 
@@ -34,7 +34,8 @@ function start() {
         if (user.confirm === true) {
             showInventory();
         } else {
-            console.log ("Thank you for shopping with Bamazon! Come back soon!")
+            console.log ("Thank you for shopping with Bamazon! Come back soon!");
+            process.exit(0);
         }
     });
 }
@@ -50,9 +51,12 @@ function showInventory() {
     function inventory() {
 
         connection.query("SELECT * FROM products", function(err, res) {
+            if (err) {
+                console.log (err);
+            }
             for (var i = 0; i < res.length; i++) {
 
-                var itemId = res[i].item_id,
+                var itemId = res[i].id,
                     productName = res[i].product_name,
                     departmentName = res[i].department_name,
                     price = res[i].price,
@@ -61,10 +65,9 @@ function showInventory() {
               table.push(
                   [itemId, productName, departmentName, price, stockQuantity]
             );
+            console.log(table);
           }
-            console.log("");
-            console.log("====================================================== Current Bamazon Inventory ======================================================");
-            console.log("");
+            console.log("\n====================================================== Current Bamazon Inventory ======================================================\n");
             console.log(table.toString());
             console.log("");
             continuePrompt();
@@ -88,6 +91,7 @@ function continuePrompt() {
             selectionPrompt();
         } else {
             console.log("Thank you! Come back soon!");
+            process.exit(0);
         }
     });
 }
@@ -112,7 +116,15 @@ function selectionPrompt() {
 
         //connect to database to find stock_quantity in database. If user quantity input is greater than stock, decline purchase.
 
-        connection.query("SELECT * FROM products WHERE item_id=?", userPurchase.inputId, function(err, res) {
+        connection.query("SELECT * FROM products WHERE id=?", userPurchase.inputId, function(err, res) {
+            if (err) {
+                console.log(err);
+            }
+            if (res.length === 0) {
+                console.log("Sorry that item is not available!");
+                start();
+            }
+                
             for (var i = 0; i < res.length; i++) {
 
                 if (userPurchase.inputNumber > res[i].stock_quantity) {
@@ -131,10 +143,10 @@ function selectionPrompt() {
                     console.log("----------------");
                     console.log("Item: " + res[i].product_name);
                     console.log("Department: " + res[i].department_name);
-                    console.log("Price: " + res[i].price);
+                    console.log("Price: $" + res[i].price);
                     console.log("Quantity: " + userPurchase.inputNumber);
                     console.log("----------------");
-                    console.log("Total: " + res[i].price * userPurchase.inputNumber);
+                    console.log("Total: $" + res[i].price * userPurchase.inputNumber);
                     console.log("===================================");
 
                     var newStock = (res[i].stock_quantity - userPurchase.inputNumber);
@@ -166,13 +178,18 @@ function confirmPrompt(newStock, purchaseId) {
             connection.query("UPDATE products SET ? WHERE ?", [{
                 stock_quantity: newStock
             }, {
-                item_id: purchaseId
-            }], function(err, res) {});
-
+                id: purchaseId
+            }], function(err, res) {
+                if (err){
+                console.log(err);
+            }  else {
             console.log("=================================");
             console.log("Transaction completed. Thank you.");
             console.log("=================================");
             start();
+            }
+            });
+           
         } else {
             console.log("=================================");
             console.log("No worries. Maybe next time!");
